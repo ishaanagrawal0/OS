@@ -4,18 +4,25 @@ Elf32_Ehdr *ehdr;
 Elf32_Phdr *phdr;
 int fd;
 
+/*
+ * release memory and other cleanups
+ */
 void loader_cleanup() {
-  if (fd != -1) {
-    close(fd);
-  }
+  
 }
 
+/*
+ * Load and run the ELF executable file
+ */
 void load_and_run_elf(char** exe) {
   fd = open(exe[1], O_RDONLY);
+
   if (fd == -1) {
     perror("Error opening ELF file");
     return;
   }
+
+  // 1. Load entire binary content into the memory from the ELF file.
 
   ehdr = mmap(NULL, sizeof(Elf32_Ehdr), PROT_READ, MAP_PRIVATE, fd, 0);
 
@@ -24,33 +31,50 @@ void load_and_run_elf(char** exe) {
     return;
   }
 
+  // 2. Iterate through the PHDR table and find the section of PT_LOAD 
+  //    type that contains the address of the entrypoint method in fib.c
+
   phdr = (Elf32_Phdr *)((char *)ehdr + ehdr->e_phoff);
 
-  for (int i = 0; i < ehdr->e_phnum; i++) {
+  int i;
+  for (i = 0; i < ehdr->e_phnum; i++) {
     if (phdr[i].p_type == PT_LOAD) {
       if (ehdr->e_entry >= phdr[i].p_vaddr && ehdr->e_entry < phdr[i].p_vaddr + phdr[i].p_memsz) {
-        void *segment_address = mmap((void *)phdr[i].p_vaddr, phdr[i].p_memsz, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_FIXED, fd, phdr[i].p_offset);
-
-        if (segment_address == MAP_FAILED) {
-          perror("Error mapping segment");
-          return;
-        }
-
-        int (*_start)() = (int (*)())(segment_address + (ehdr->e_entry - phdr[i].p_vaddr));
-        int result = _start();
-        printf("User _start return value = %d\n", result);
+        break;
       }
     }
   }
-}
 
-int main(int argc, char** argv) {
-  if (argc != 2) {
-    printf("Usage: %s <ELF Executable>\n", argv[0]);
-    exit(1);
+  // 3. Allocate memory of the size "p_memsz" using mmap function 
+  //    and then copy the segment content
+
+  void *segment_address = mmap((void *)phdr[i].p_vaddr, phdr[i].p_memsz, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_FIXED, fd, phdr[i].p_offset);
+
+  if (segment_address == MAP_FAILED) {
+    perror("Error mapping segment");
+    return;
   }
 
+  // 4. Navigate to the entrypoint address into the segment loaded in the memory in above step
+  // 5. Typecast the address to that of function pointer matching "_start" method in fib.c.
+
+  int (*_start)() = (int (*)())(segment_address + (ehdr->e_entry - phdr[i].p_vaddr));
+
+  // 6. Call the "_start" method and print the value returned from the "_start"
+  int result = _start();
+  printf("User _start return value = %d\n",result);
+}
+
+int main(int argc, char** argv) 
+{
+  if(argc != 2) {
+    printf("Usage: %s <ELF Executable> \n",argv[0]);
+    exit(1);
+  }
+  // 1. carry out necessary checks on the input ELF file
+  // 2. passing it to the loader for carrying out the loading/execution
   load_and_run_elf(argv);
+  // 3. invoke the cleanup routine inside the loader  
   loader_cleanup();
   return 0;
 }
