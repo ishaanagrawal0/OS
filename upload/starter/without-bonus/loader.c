@@ -18,6 +18,7 @@ void load_and_run_elf(char** exe) {
   }
 
   ehdr = mmap(NULL, sizeof(Elf32_Ehdr), PROT_READ, MAP_PRIVATE, fd, 0);
+
   if (ehdr == MAP_FAILED) {
     perror("Error mapping ELF header");
     return;
@@ -27,16 +28,17 @@ void load_and_run_elf(char** exe) {
 
   for (int i = 0; i < ehdr->e_phnum; i++) {
     if (phdr[i].p_type == PT_LOAD) {
-      void *segment_address = mmap((void *)phdr[i].p_vaddr, phdr[i].p_memsz, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_FIXED, fd, phdr[i].p_offset);
-      if (segment_address == MAP_FAILED) {
-        perror("Error mapping segment");
-        return;
-      }
-
       if (ehdr->e_entry >= phdr[i].p_vaddr && ehdr->e_entry < phdr[i].p_vaddr + phdr[i].p_memsz) {
+        void *segment_address = mmap((void *)phdr[i].p_vaddr, phdr[i].p_memsz, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_FIXED, fd, phdr[i].p_offset);
+
+        if (segment_address == MAP_FAILED) {
+          perror("Error mapping segment");
+          return;
+        }
+
         int (*_start)() = (int (*)())(segment_address + (ehdr->e_entry - phdr[i].p_vaddr));
         int result = _start();
-        printf("%d", result);
+        printf("User _start return value = %d\n", result);
       }
     }
   }
