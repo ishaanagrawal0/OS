@@ -26,6 +26,7 @@ void load_and_run_elf(char** exe) {
     return;
   }
 
+  // getting the size of the file
   off_t file_size = lseek(fd, 0, SEEK_END);
   if (file_size == -1) {
     perror("Error getting file size");
@@ -57,29 +58,50 @@ void load_and_run_elf(char** exe) {
     return;
   }
 
+  ehdr = (Elf32_Ehdr *) binary_content; // setting the elf header to the binary content
+
   // 2. Iterate through the PHDR table and find the section of PT_LOAD 
   //    type that contains the address of the entrypoint method in fib.c
 
-  // reading the elf header
+  phdr = (Elf32_Phdr *) (binary_content + ehdr->e_phoff); // setting the program header to the binary content + the offset of the elf header
 
+  Elf32_Phdr *load_phdr = NULL;
   
+  for (int i = 0; i < ehdr->e_phnum; i++) {
+    if (phdr[i].p_type == PT_LOAD) {
+      load_phdr = &phdr[i];
+      break;
+    }
+  }
+
+  if (load_phdr == NULL) {
+    fprintf(stderr, "No PT_LOAD section found\n");
+    return;
+  }
 
   // 3. Allocate memory of the size "p_memsz" using mmap function 
   //    and then copy the segment content
 
-  
+  void *virtual_mem = mmap(NULL, load_phdr->p_memsz, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_ANONYMOUS | MAP_PRIVATE, 0, 0);
+
+  if (virtual_mem == MAP_FAILED) {
+    perror("Error allocating virtual memory");
+    return;
+  }
 
   // 4. Navigate to the entrypoint address into the segment loaded in the memory in above step
 
-  
+  size_t entrypoint_offset = ehdr->e_entry - load_phdr->p_vaddr;
+  void *entrypoint_address = virtual_mem + entrypoint_offset;
 
   // 5. Typecast the address to that of function pointer matching "_start" method in fib.c.
 
-  
+  int (*_start)(void) = (int (*)(void)) ehdr->e_entry;
 
   // 6. Call the "_start" method and print the value returned from the "_start"
-
   
+  int result = _start();
+  printf("Result: %d\n", result);
 }
 
 int main(int argc, char** argv) 
