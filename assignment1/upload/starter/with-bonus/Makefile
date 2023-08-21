@@ -3,12 +3,30 @@
 #Provide the command for cleanup
 
 # Directories to build
-DIRS = loader launcher test
 
-all: $(DIRS)
+#DIRS = loader launcher test
 
-$(DIRS): $(MAKE) -C $@
+#all: $(DIRS)
 
-clean: for dir in $(DIRS); do \
+#$(DIRS): $(MAKE) -C $@
+
+#clean: for dir in $(DIRS); do \
     $(MAKE) -C $$dir clean; \
     	done
+
+all: loader launcher test
+
+loader:
+	$(MAKE) -C loader
+
+launcher:
+	$(MAKE) -C launcher
+
+test:
+	$(MAKE) -C test
+
+clean:
+	$(MAKE) -C loader clean
+	$(MAKE) -C launcher clean
+	$(MAKE) -C test clean
+
