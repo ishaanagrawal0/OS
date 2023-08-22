@@ -1,24 +1,8 @@
 #Create lib_simpleloader.so from loader.c
+all : lib_simpleloader.so
 
-# Compiler settings
-CC = gcc
-CFLAGS = -Wall -Werror -shared -fPIC -m32
-
-# Source file
-SRC = loader.c
-
-# Target library
-TARGET = lib_simpleloader.so
-
-# Directory for the library and binary
-BIN_DIR = ../bin
-
-all: $(TARGET)
-    mkdir -p $(BIN_DIR)
-    mv $(TARGET) $(BIN_DIR)
-
-$(TARGET): $(SRC) loader.h
-    $(CC) $(CFLAGS) -o $(TARGET) $(SRC)
-
+lib_simpleloader.so : loader.c loader.h
+	gcc -shared -m32 -o lib_simpleloader.so -fPIC loader.c
+#Provide the command for cleanup
 clean:
-    rm -f $(TARGET)
+	rm lib_simpleloader.so
