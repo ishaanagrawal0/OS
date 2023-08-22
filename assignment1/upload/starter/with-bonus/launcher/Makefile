@@ -1,20 +1,25 @@
 #Compile the launch.c by linking it with the lib_simpleloader.so
-
-#Provide the command for cleanup
+# Makefile for compiling launch.c using lib_simpleloader.so
 
 # Compiler settings
-CC = gcc
-CFLAGS = -Wall -Werror
-LDFLAGS = -L../bin -lsimpleloader
+CC := gcc
+CFLAGS := -Wall -Wextra -I../loader
+LDFLAGS := -L../loader -Wl,-rpath=../loader
+LDLIBS := ../loader/lib_simpleloader.so
 
-# Source file
-SRC = launch.c
+# Source and output files
+SRC := launch.c
+OUT := launch
 
-# Target executable
-TARGET = launch
+# Build rule
+all: $(OUT)
 
-all: $(TARGET)
+$(OUT): $(SRC)
+	$(CC) $(CFLAGS) $(LDFLAGS) -m32 -o $@ $< $(LDLIBS)
 
-$(TARGET): $(SRC) $(CC) $(CFLAGS) $(SRC) -o $(TARGET) $(LDFLAGS)
+clean:
+	rm -f $(OUT)
 
-clean: rm -f $(TARGET)
+.PHONY: all clean
+
+#Provide the command for cleanup
