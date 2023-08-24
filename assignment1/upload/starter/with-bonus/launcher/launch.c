@@ -1,15 +1,22 @@
-#include "loader.h"
+#Compile the launch.c by linking it with the lib_simpleloader.so
+# Makefile for compiling launch.c using lib_simpleloader.so
 
-int main(int argc, char** argv) 
-{
-  if(argc != 2) {
-    printf("Usage: %s <ELF Executable> \n",argv[0]);
-    exit(1);
-  }
-  // 1. carry out necessary checks on the input ELF file
-  // 2. passing it to the loader for carrying out the loading/execution
-  load_and_run_elf(argv);
-  // 3. invoke the cleanup routine inside the loader
-  loader_cleanup();
-  return 0;
-}
+# Compiler settings
+CC := gcc
+CFLAGS := -I../loader
+LDFLAGS := -L../loader -Wl,-rpath=../loader
+LDLIBS := ../bin/lib_simpleloader.so
+
+# Source and output files
+SRC := launch.c
+OUT := launch
+
+# Build rule
+all: $(OUT)
+
+$(OUT): $(SRC)
+	$(CC) $(CFLAGS) $(LDFLAGS) -m32 -o $@ $< $(LDLIBS)
+
+clean:
+	rm ../bin/$(OUT)
+#Provide the command for cleanup
