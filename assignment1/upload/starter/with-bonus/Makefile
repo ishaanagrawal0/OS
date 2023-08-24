@@ -17,7 +17,9 @@ $(BIN_DIR)/$(TEST_TARGET):
 	@$(MAKE) -C test
 	@mkdir -p $(BIN_DIR)
 	@mv launcher/$(LAUNCHER_TARGET) $(BIN_DIR)
-	@mv test/fib $(BIN_DIR)
+
+bonus:
+	cd bin && ./launch ../test/fib
 
 clean:
 	@rm -rf $(BIN_DIR)
