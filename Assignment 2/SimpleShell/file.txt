@@ -1,7 +1,0 @@
-$cat kt.txt
-I love music.
-I love music.
-I love music.
-
-I love music of Kartik.
-I love music of Kartik.
